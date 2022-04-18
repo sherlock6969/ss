@@ -1,0 +1,13 @@
+begin
+    read header record
+    verify program name and length
+    read first text record
+    while record type != 'E' do
+        begin
+            if object code is in character form, convert it into internal
+            representation
+            move object code into specified location in memory
+            read next object program from record
+        end
+    jump to address specified in end record
+end

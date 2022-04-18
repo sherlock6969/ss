@@ -1,0 +1,88 @@
+DATA SEGMENT
+    STRING DB 0AH DUP("$")  
+    MSG DB "Enter the string: $"  
+    NEWLINE DB 0AH,0DH,"No. of vowels: $"
+    LEN DB ?
+DATA ENDS
+
+DISPLAY MACRO ARG
+    MOV AH,09H
+    LEA DX,ARG
+    INT 21H
+ENDM
+
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START:
+    MOV AX,DATA
+    MOV DS,AX 
+    
+    DISPLAY MSG
+    MOV AH,0AH
+    LEA DX,STRING
+    MOV STRING,0FFH
+    INT 21H  
+  
+    LEA SI,STRING 
+    MOV CL,[SI+1] 
+    MOV CH,00
+    MOV LEN,CL
+    MOV BH,00  
+RE: MOV AL,[SI+2]  
+    CMP AL,41H
+    JZ COUNT
+    CMP AL,45H
+    JZ COUNT
+    CMP AL,49H
+    JZ COUNT
+    CMP AL,4FH
+    JZ COUNT 
+    CMP AL,55H
+    JZ COUNT
+    CMP AL,61H
+    JZ COUNT
+    CMP AL,65H
+    JZ COUNT
+    CMP AL,69H
+    JZ COUNT
+    CMP AL,6FH
+    JZ COUNT 
+    CMP AL,75H
+    JZ COUNT
+    JMP SKIP
+COUNT:INC BH
+SKIP:INC SI
+    LOOP RE
+    DISPLAY NEWLINE
+    CALL PRINT_OUTPUT
+    
+EOC:MOV AH,01H
+    INT 21H  
+    MOV AX,4CH
+    INT 21H     
+
+    
+PRINT_OUTPUT PROC   
+    MOV DH,BH 
+    AND BH,0F0H
+    SHR BH,4H   
+    ADD BH,30H
+    CMP BH,39H
+    JLE L8
+    ADD BH,07H
+L8: MOV AH,02H
+    MOV DL,BH
+    INT 21H
+    AND DH,0FH
+    ADD DH,30H
+    CMP DH,39H
+    JLE L9
+    ADD DH,07H
+L9: MOV AH,02H
+    MOV DL,DH
+    INT 21H 
+    RET
+PRINT_OUTPUT ENDP 
+    
+CODE ENDS
+END START

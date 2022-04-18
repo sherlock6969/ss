@@ -1,0 +1,120 @@
+DATA SEGMENT
+    ARR DW 06 DUP(?)
+    LENMSG DB "Enter length: $"
+    ARRMSG DB 0AH,0DH,"Enter the elements: $"  
+    NEWLINE DB 0AH,0DH,"$"
+    LARGEST DW 00H
+    SEC DW 00H
+    LEN DW ?
+    OUTPUT DB 0AH,0DH,"Second Largest number : $"
+DATA ENDS
+
+DISPLAY MACRO ARG
+    MOV AH,09H
+    LEA DX,ARG
+    INT 21H
+ENDM
+
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA
+START:
+    MOV AX,DATA
+    MOV DS,AX
+       
+    LEA SI,ARR
+    DISPLAY LENMSG
+    CALL GET_INPUT
+    MOV BH,BL
+    CALL GET_INPUT 
+    MOV LEN,BX  
+    MOV CX,LEN
+    DISPLAY ARRMSG
+IPARR: PUSH CX 
+    CALL GET_INPUT 
+    MOV BH,BL
+    CALL GET_INPUT 
+    MOV [SI],BX
+    ADD SI,02H
+    POP CX  
+    DISPLAY NEWLINE
+    LOOP IPARR
+       
+    LEA SI,ARR
+    MOV CX,LEN 
+    MOV AX,LARGEST
+L5: CMP AX,[SI]
+    JNC L4
+    MOV AX,[SI]
+L4: ADD SI,02H
+    LOOP L5
+    MOV LARGEST,AX
+    
+    LEA SI,ARR
+    MOV CX,LEN 
+    MOV AX,SEC
+L7: CMP AX,[SI]
+    JNC L6 
+    MOV BX,[SI]
+    CMP BX,LARGEST
+    JZ L6
+    MOV AX,[SI]
+L6: ADD SI,02H
+    LOOP L7
+    MOV SEC,AX   
+    
+    MOV BX,SEC
+    DISPLAY OUTPUT 
+    CALL PRINT_OUTPUT
+    MOV BH,BL
+    CALL PRINT_OUTPUT  
+    MOV AH,01H
+    INT 21H 
+    MOV AX,4CH
+    INT 21H  
+
+    GET_INPUT PROC 
+    MOV AH,01H
+    INT 21H
+    SUB AL,30H
+    CMP AL,09H
+    JLE L1
+    SUB AL,07H    
+    
+L1: MOV BL,AL
+    MOV CL,04H
+    SHL BL,CL  
+    
+    MOV AH,01H
+    INT 21H
+    SUB AL,30H
+    CMP AL,09H
+    JLE L3
+    SUB AL,07H    
+L3: ADD BL,AL
+    RET
+    GET_INPUT ENDP  
+    
+    PRINT_OUTPUT PROC   
+    MOV DH,BH 
+    AND BH,0F0H
+    SHR BH,4H   
+    ADD BH,30H
+    CMP BH,39H
+    JLE L8
+    ADD BH,07H
+L8: MOV AH,02H
+    MOV DL,BH
+    INT 21H
+    AND DH,0FH
+    ADD DH,30H
+    CMP DH,39H
+    JLE L9
+    ADD DH,07H
+L9: MOV AH,02H
+    MOV DL,DH
+    INT 21H 
+    RET
+    PRINT_OUTPUT ENDP    
+    
+CODE ENDS
+END START

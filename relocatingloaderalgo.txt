@@ -1,0 +1,20 @@
+begin
+    read header record
+    verify program name and length
+    input the address to where the program is to be relocated
+    calculate the effective address as relocation address - start address
+    read first text record
+    while record type != 'E' do
+        begin
+            if record type == 'T', then
+                { if object code is in character form, convert it into
+                internal representation }
+                move object code into specified location in memory
+            else if record type == 'M', then
+                read the location of address to be modified and length in half bytes
+                add the effective address at location specified
+            end if
+            read next object program from record
+        end
+    jump to address specified in end record
+end

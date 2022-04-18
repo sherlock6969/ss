@@ -1,0 +1,52 @@
+Begin
+    Read first input line (from intermediate file)
+    If OPCODE = 'START' then
+    Begin
+        Write listing line
+        Read next input line
+    End
+
+    Write Header record to object program
+    Initialize first text record
+
+    While OPCODE ≠ 'END' do
+    Begin
+        If this is not comment line then
+        Begin
+            Search OPTAB for OPCODE
+            If found then
+            Begin
+                If there is a symbol in OPERAND field then
+                Begin
+                    Search SYMTAB for OPERAND
+                    If found then
+                        Store symbol value as operand address
+                    Else
+                    Begin
+                        Store 0 as operand address
+                        Set error flag
+                    End
+                End
+                Else
+                    Store 0 as operand address
+                Asseble the object code instruction
+            End
+
+            Else if OPCODE='BYTE' or 'WORD' then
+                Convert constant to object code
+            
+            If object code will not fit into the current text record then
+            Begin
+                Write text record to object program
+                Initialize new text record
+            End
+            Add object code to text record
+        End
+        Write listing line
+        Read next input line
+    End
+
+    Write last text record to object program
+    Write end record to object program
+    Write last listing line
+End

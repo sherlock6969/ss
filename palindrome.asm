@@ -1,0 +1,85 @@
+DATA SEGMENT
+    NUM DB 0AH DUP(?)  
+    LENMSG DB "Enter length: $"
+    MSG DB 0AH,0DH,"Enter the number: $"  
+    NEWLINE DB 0AH,0DH,"$"
+    LEN DB ?
+    PAL DB 0AH,0DH,"Number is a palindrome$"
+    NPAL DB 0AH,0DH,"Number is not a palindrome$"
+DATA ENDS
+
+EXTRA SEGMENT
+    REV DB 0AH DUP(?)
+EXTRA ENDS
+
+DISPLAY MACRO ARG
+    MOV AH,09H
+    LEA DX,ARG
+    INT 21H
+ENDM
+
+CODE SEGMENT
+    ASSUME CS:CODE,DS:DATA, ES:EXTRA
+START:
+    MOV AX,DATA
+    MOV DS,AX 
+    MOV AX,EXTRA
+    MOV ES,AX
+    
+    DISPLAY LENMSG
+    CALL GET_INPUT
+    MOV LEN,CL
+    MOV CH,00
+    DISPLAY MSG 
+    LEA SI,NUM
+INPUT:MOV AH,01H
+    INT 21H
+    MOV [SI],AL
+    INC SI
+    LOOP INPUT  
+    MOV CL,LEN
+    LEA DI,REV 
+    DEC SI    
+RE: STD
+    LODSB
+    CLD
+    STOSB     
+    LOOP RE 
+    
+    MOV CL,LEN 
+    LEA SI,NUM
+    LEA DI,REV
+    REPE CMPSB
+    JNZ FALSE  
+    DISPLAY PAL
+    JMP EOC
+FALSE: DISPLAY NPAL
+
+EOC:MOV AH,01H
+    INT 21H  
+    MOV AX,4CH
+    INT 21H     
+    
+    GET_INPUT PROC 
+    MOV AH,01H
+    INT 21H
+    SUB AL,30H
+    CMP AL,09H
+    JLE L1
+    SUB AL,07H    
+    
+L1: MOV CL,AL
+    SHL CL,4H  
+    
+    MOV AH,01H
+    INT 21H
+    SUB AL,30H
+    CMP AL,09H
+    JLE L3
+    SUB AL,07H    
+L3: ADD CL,AL 
+    RET
+    GET_INPUT ENDP 
+    
+CODE ENDS
+END START
