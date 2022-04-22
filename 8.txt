@@ -1,0 +1,131 @@
+create table Customers(
+C_id varchar(6) check (C_id like 'C%') primary key,
+name varchar(10),
+DOB date,
+marital_status varchar(1) check (marital_status = 'Y' or marital_status = 'N')
+);
+
+create table Orders(
+O_id varchar(6) check (O_id like 'O%') primary key,
+C_id varchar(6),
+order_date date,
+foreign key (C_id) references Customers(C_id)
+);
+
+create table Product(
+P_id varchar(6) check (P_id like 'P%') primary key,
+product_name varchar(6),
+quantity_on_hand real
+);
+
+create table OrderItem(
+O_id varchar(6),
+P_id varchar(6),
+unit_price real,
+quantity real check (quantity > 0),
+foreign key (O_id) references Orders(O_id),
+foreign key (P_id) references Product(P_id)
+);
+
+
+insert into Customers values ('C001', 'Shambu', '2001-02-24', 'Y');
+insert into Customers values ('C002', 'Shyam', '2000-12-20', 'N');
+insert into Customers values ('C003', 'Payal', '2003-10-03', 'N');
+insert into Customers values ('C004', 'Nahal', '1999-05-15', 'Y');
+insert into Customers values ('C005', 'Midhun', '2005-02-20', 'Y');
+
+insert into Orders values ('O001', 'C001', '2020-02-20');
+insert into Orders values ('O002', 'C002', '2022-01-20');
+insert into Orders values ('O003', 'C003', '2019-09-20');
+insert into Orders values ('O004', 'C004', '2016-10-20');
+insert into Orders values ('O005', 'C005', '2020-12-20');
+
+insert into Product values('P001', 'Prod1', 50);
+insert into Product values('P002', 'Prod2', 150);
+insert into Product values('P003', 'Prod3', 30);
+insert into Product values('P004', 'Prod4', 120);
+insert into Product values('P005', 'Prod5', 80);
+
+insert into OrderItem values ('O001', 'P001', 20, 30);
+insert into OrderItem values ('O002', 'P002', 50, 145);
+insert into OrderItem values ('O003', 'P003', 120, 130);
+insert into OrderItem values ('O004', 'P004', 200, 120);
+insert into OrderItem values ('O005', 'P005', 80, 50);
+
+1. select * from customers where name like '%l' order by name;
+
+2. select p_id, quantity, to_char(order_date, 'Month') from orders o inner join orderitem oi using (o_id) where to_char(order_date, 'Month') like '%February%';
+
+3. select name from customers where c_id in (
+    select c_id from orders where o_id in (
+    select o_id from orderitem where p_id in(
+    select p_id from product where product_name not in ('Prod1', 'Prod2'))));
+
+4. select p.p_id,p.product_name,p.quantity_on_hand,sum(o.quantity)
+	from product p,orderitem o
+	where p.p_id = o.p_id
+	GROUP BY p.p_id;
+
+5. 
+
+create or replace function count_order()
+returns void
+language plpgsql
+as $$
+declare
+count int = 0;
+f record;
+begin
+for f in (select * from orderitem)
+loop
+	if (f.p_id = 'P001') then
+		count = count + 1;
+	end if;
+end loop;
+raise notice 'Orders for product-P001 : %',count;
+end $$;
+
+
+6. 
+
+CREATE OR REPLACE FUNCTION func()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+r record;
+BEGIN
+        for r in ( select *
+        from customers
+        where c_id in (select c_id from orders
+        where o_id in (select o_id from orderitem
+        where p_id=(select p_id from
+        (select p_id, sum(quantity) as s from orderitem
+         group by p_id order by s desc limit 1) t))))
+
+        loop
+        raise notice 'ID : % Name : % , DOB : % , Marital Status : %',r.c_id,r.name,r.dob,r.marital_status;
+        end loop;
+END $$;
+
+
+7.
+
+create or replace function ins_tr()
+returns trigger
+language plpgsql
+as $$
+declare
+f record;
+begin
+select * into f from product where p_id = new.p_id;
+if ( f.quantity_on_hand < new.quantity) then
+raise exception 'Pattilla!!!!';
+end if;
+raise notice '%  %',f.quantity_on_hand, new.quantity;
+return new;
+end $$;
+
+
+create trigger tri on orderitem before insert
+for all rows execute ins_tr();
